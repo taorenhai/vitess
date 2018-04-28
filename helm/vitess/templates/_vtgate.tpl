@@ -20,6 +20,8 @@
 kind: Service
 apiVersion: v1
 metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
   name: vtgate-{{ $cellClean }}
   labels:
     component: vtgate

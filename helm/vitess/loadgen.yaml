@@ -1,0 +1,51 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: loadgen
+  labels:
+    component: loadgen
+    app: vitess
+spec:
+  ports:
+    - name: web
+      port: 24001
+  selector:
+    component: loadgen
+    app: vitess
+  type: LoadBalancer
+
+---
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: loadgen
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vitess
+      component: loadgen
+  template:
+    metadata:
+      labels:
+        app: vitess
+        component: loadgen
+    spec:
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 2000
+      containers:
+        - name: loadgen
+          image: sougou/loadgen:latest
+
+          resources:
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          command:
+            - bash
+            - "-c"
+            - |
+              set -ex;
+              eval exec /vt/bin/loadgen

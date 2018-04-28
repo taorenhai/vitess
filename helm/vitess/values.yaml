@@ -103,7 +103,7 @@ etcd:
 
 # Default values for vtctld resources defined in 'topology'
 vtctld:
-  serviceType: "ClusterIP"
+  serviceType: "LoadBalancer"
   vitessTag: "latest"
   resources:
     limits:
@@ -112,7 +112,7 @@ vtctld:
 
 # Default values for vtgate resources defined in 'topology'
 vtgate:
-  serviceType: "ClusterIP"
+  serviceType: "LoadBalancer"
   vitessTag: "latest"
   resources:
     limits:

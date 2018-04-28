@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vtworker
+spec:
+  template:
+    metadata:
+      name: vtworker
+    spec:
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 2000
+      restartPolicy: Never
+      containers:
+        - name: splitclone
+          image: vitess/vtworker:latest
+          command: ["/bin/bash"]
+          args:
+            - "-c"
+            - "/vt/bin/vtworker -topo_implementation=etcd2 -topo_global_root=/vitess/global -topo_global_server_address=etcd-global-client.default:2379 -cell zone1 -logtostderr=true -stderrthreshold=0 -use_v3_resharding_mode SplitClone -min_healthy_rdonly_tablets=0 messagedb/0"

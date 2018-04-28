@@ -1,0 +1,81 @@
+# Initialize cluster
+kubectl cluster-info
+kubectl config view
+
+# Setup storage class
+kubectl create -f ebs_gp2_storage_class.yaml
+
+# Prep cluster for vitess
+cd ~/dev/src/github.com/coreos/etcd-operator/
+example/rbac/create_role.sh
+kubectl create -f example/deployment.yaml
+cd ~/dev/src/vitess.io/vitess/helm/vitess
+
+# Start cluster
+helm install . --name vitess -f values.yaml -f sugu.yaml
+helm install stable/prometheus --name myprom -f prometheus/values.yaml
+helm install stable/grafana --name mygraf -f grafana/values.yaml
+
+# Get vtctl addresses
+kubectl describe service vtctld
+# Add vtctld address to lvtctl
+
+# Grafana setup
+# Obtain admin pwd from k8s dashboard
+url: http://myprom-prometheus-server
+# Bring up vtgate QPS
+
+# Run after initial cluster spin-up
+./lvtctl.sh ApplySchema -sql "$(cat create_test_table.sql)" messagedb
+./lvtctl.sh ApplyVSchema -vschema "$(cat vschema.json)" messagedb
+
+# Start load generator
+kubectl create -f loadgen.yaml
+
+# Start target tablets
+helm upgrade vitess . -f values.yaml -f sugu2.yaml
+
+# Run after target shard spin up
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/-10
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/10-20
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/20-30
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/30-40
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/40-50
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/50-60
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/60-70
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/70-80
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/80-90
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/90-a0
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/a0-b0
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/b0-c0
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/c0-d0
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/d0-e0
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/e0-f0
+./lvtctl.sh CopySchemaShard messagedb/0 messagedb/f0-
+
+# Reshard
+kubectl create -f splitclone.yaml
+
+# Migrate
+./lvtctl.sh MigrateServedTypes messagedb/0 rdonly
+./lvtctl.sh MigrateServedTypes messagedb/0 replica
+./lvtctl.sh MigrateServedTypes messagedb/0 master
+
+# Scale load
+kubectl scale --replicas=32 deployment/loadgen
+
+# Cleanup
+kubectl delete -f splitclone.yaml
+kubectl delete -f loadgen.yaml
+helm delete mygraf myprom --purge
+helm delete vitess --purge
+kubectl delete pods -l component=vttablet --force --grace-period=0
+kubectl delete pvc -l app=vitess
+cd ~/dev/src/github.com/coreos/etcd-operator/
+kubectl delete -f example/deployment.yaml
+cd ~/dev/src/vitess.io/vitess/helm/vitess
+
+
+# Conjure down
+juju switch
+juju destroy-controller --destroy-all-models name

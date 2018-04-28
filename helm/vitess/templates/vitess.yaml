@@ -34,15 +34,6 @@
 
 # Create requested resources in each cell.
 {{ range $cell := $.Values.topology.cells }}
-
----
-# create an etcd cluster per cell
-{{- $cellClean := include "clean-label" $cell.name -}}
-{{- $replicas := $cell.etcd.replicas | default $.Values.etcd.replicas -}}
-{{- $version := $cell.etcd.version | default $.Values.etcd.version -}}
-{{- $resources := $cell.etcd.resources | default $.Values.etcd.resources -}}
-
-{{ include "etcd" (tuple $cellClean $replicas $version $resources) }}
 ---
 # create one controller per cell
 {{ include "vtctld" (tuple $.Values.topology $cell $.Values.vtctld $.Release.Namespace $.Values.config) }}

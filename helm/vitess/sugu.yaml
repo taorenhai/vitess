@@ -1,0 +1,25 @@
+topology:
+  cells:
+    - name: "zone1"
+      mysqlProtocol:
+        enabled: true
+      etcd:
+        replicas: 3
+      vtctld:
+        replicas: 1
+      vtgate:
+        replicas: 24
+        maxReplicas: 20
+      mysqlProtocol:
+        enabled: false
+      keyspaces:
+        - name: "messagedb"
+          shards:
+            - name: "0"
+              tablets:
+                - type: "replica"
+                  vttablet:
+                    replicas: 2
+                - type: "rdonly"
+                  vttablet:
+                    replicas: 1
