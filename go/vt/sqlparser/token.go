@@ -431,7 +431,7 @@ func (tkn *Tokenizer) Lex(lval *yySymType) int {
 		}
 		typ, val = tkn.Scan()
 	}
-	lval.bytes = val
+	lval.val = val
 	tkn.lastToken = val
 	return typ
 }

@@ -200,7 +200,7 @@ func forceEOF(yylex interface{}) {
 // MySQL reserved words that are unused by this grammar will map to this token.
 %token <bytes> UNUSED
 
-%type <statement> command
+%type <statement> any_command command
 %type <selStmt> select_statement base_select union_lhs union_rhs
 %type <statement> stream_statement insert_statement update_statement delete_statement set_statement
 %type <statement> create_statement alter_statement rename_statement drop_statement truncate_statement
@@ -302,6 +302,7 @@ func forceEOF(yylex interface{}) {
 %type <colIdent> vindex_type vindex_type_opt
 %type <bytes> alter_object_type
 %type <ReferenceAction> fk_reference_action fk_on_delete fk_on_update
+%type <empty> openb closeb
 
 %start any_command
 
@@ -314,8 +315,7 @@ any_command:
   }
 
 semicolon_opt:
-/*empty*/ {}
-| ';' {}
+| ';'
 
 command:
   select_statement
@@ -451,8 +451,8 @@ delete_statement:
   }
 
 from_or_using:
-  FROM {}
-| USING {}
+  FROM
+| USING
 
 table_name_list:
   table_name
@@ -673,13 +673,14 @@ table_column_list:
 column_definition:
   ID column_type null_opt column_default_opt on_update_opt auto_increment_opt column_key_opt column_comment_opt
   {
-    $2.NotNull = $3
-    $2.Default = $4
-    $2.OnUpdate = $5
-    $2.Autoincrement = $6
-    $2.KeyOpt = $7
-    $2.Comment = $8
-    $$ = &ColumnDefinition{Name: NewColIdent(string($1)), Type: $2}
+    v := $2
+    v.NotNull = $3
+    v.Default = $4
+    v.OnUpdate = $5
+    v.Autoincrement = $6
+    v.KeyOpt = $7
+    v.Comment = $8
+    $$ = &ColumnDefinition{Name: NewColIdent(string($1)), Type: v}
   }
 column_type:
   numeric_type unsigned_opt zero_fill_opt
@@ -1501,7 +1502,8 @@ show_statement:
   }
 | SHOW COLLATION WHERE expression
   {
-    $$ = &Show{Type: string($2), ShowCollationFilterOpt: &$4}
+    v := $4
+    $$ = &Show{Type: string($2), ShowCollationFilterOpt: &v}
   }
 | SHOW VINDEXES ON table_name
   {
