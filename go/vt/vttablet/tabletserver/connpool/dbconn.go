@@ -64,7 +64,7 @@ func NewDBConn(
 	appParams *mysql.ConnParams) (*DBConn, error) {
 	c, err := dbconnpool.NewDBConnection(appParams, tabletenv.MySQLStats)
 	if err != nil {
-		cp.checker.CheckMySQL()
+		cp.tsv.CheckMySQL()
 		return nil, err
 	}
 	return &DBConn{
@@ -118,7 +118,7 @@ func (dbc *DBConn) Exec(ctx context.Context, query string, maxrows int, wantfiel
 		}
 
 		if reconnectErr := dbc.reconnect(); reconnectErr != nil {
-			dbc.pool.checker.CheckMySQL()
+			dbc.pool.tsv.CheckMySQL()
 			// Return the error of the reconnect and not the original connection error.
 			return nil, reconnectErr
 		}
@@ -199,7 +199,7 @@ func (dbc *DBConn) Stream(ctx context.Context, query string, callback func(*sqlt
 		default:
 		}
 		if reconnectErr := dbc.reconnect(); reconnectErr != nil {
-			dbc.pool.checker.CheckMySQL()
+			dbc.pool.tsv.CheckMySQL()
 			// Return the error of the reconnect and not the original connection error.
 			return reconnectErr
 		}

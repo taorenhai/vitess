@@ -36,7 +36,7 @@ func TestTxEngineClose(t *testing.T) {
 	config.TransactionCap = 10
 	config.TransactionTimeout = 0.5
 	config.TxShutDownGracePeriod = 0
-	te := NewTxEngine(nil, config)
+	te := NewTxEngine(FakeTabletService, config)
 	te.InitDBConfig(dbcfgs)
 
 	// Normal close.

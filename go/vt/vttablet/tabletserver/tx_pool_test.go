@@ -624,7 +624,7 @@ func newTxPool() *TxPool {
 		transactionTimeout,
 		idleTimeout,
 		waiterCap,
-		DummyChecker,
+		FakeTabletService,
 		limiter,
 	)
 }

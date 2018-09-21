@@ -104,7 +104,7 @@ func main() {
 
 	// creates and registers the query service
 	ts := topo.Open()
-	qsc := tabletserver.NewServer(ts, *tabletAlias)
+	qsc := tabletserver.NewServer("", ts, *tabletAlias)
 	servenv.OnRun(func() {
 		qsc.Register()
 		addStatusParts(qsc)

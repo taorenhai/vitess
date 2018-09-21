@@ -73,7 +73,7 @@ type Writer struct {
 }
 
 // NewWriter creates a new Writer.
-func NewWriter(checker connpool.MySQLChecker, alias topodatapb.TabletAlias, config tabletenv.TabletConfig) *Writer {
+func NewWriter(tsv connpool.TabletService, alias topodatapb.TabletAlias, config tabletenv.TabletConfig) *Writer {
 	if !config.HeartbeatEnable {
 		return &Writer{}
 	}
@@ -84,7 +84,7 @@ func NewWriter(checker connpool.MySQLChecker, alias topodatapb.TabletAlias, conf
 		interval:    config.HeartbeatInterval,
 		ticks:       timer.NewTimer(config.HeartbeatInterval),
 		errorLog:    logutil.NewThrottledLogger("HeartbeatWriter", 60*time.Second),
-		pool:        connpool.New(config.PoolNamePrefix+"HeartbeatWritePool", 1, time.Duration(config.IdleTimeout*1e9), checker),
+		pool:        connpool.New(config.PoolNamePrefix+"HeartbeatWritePool", 1, time.Duration(config.IdleTimeout*1e9), tsv),
 	}
 }
 
