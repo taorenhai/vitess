@@ -55,6 +55,9 @@ var (
 	ts *topo.Server
 )
 
+var resilientServer *srvtopo.ResilientServer
+var healthCheck discovery.HealthCheck
+
 func init() {
 	servenv.RegisterDefaultFlags()
 }
@@ -109,8 +112,8 @@ func main() {
 	}
 
 	// vtgate configuration and init
-	resilientServer := srvtopo.NewResilientServer(ts, "ResilientSrvTopoServer")
-	healthCheck := discovery.NewHealthCheck(1*time.Millisecond /*retryDelay*/, 1*time.Hour /*healthCheckTimeout*/)
+	resilientServer = srvtopo.NewResilientServer(ts, "ResilientSrvTopoServer")
+	healthCheck = discovery.NewHealthCheck(1*time.Millisecond /*retryDelay*/, 1*time.Hour /*healthCheckTimeout*/)
 	tabletTypesToWait := []topodatapb.TabletType{
 		topodatapb.TabletType_MASTER,
 		topodatapb.TabletType_REPLICA,
@@ -120,10 +123,14 @@ func main() {
 	vtgate.QueryLogHandler = "/debug/vtgate/querylog"
 	vtgate.QueryLogzHandler = "/debug/vtgate/querylogz"
 	vtgate.QueryzHandler = "/debug/vtgate/queryz"
-	vtgate.Init(context.Background(), healthCheck, resilientServer, tpb.Cells[0], 2 /*retryCount*/, tabletTypesToWait)
+	vtg := vtgate.Init(context.Background(), healthCheck, resilientServer, tpb.Cells[0], 2 /*retryCount*/, tabletTypesToWait)
 
 	// vtctld configuration and init
 	vtctld.InitVtctld(ts)
+
+	servenv.OnRun(func() {
+		addStatusParts(vtg)
+	})
 
 	servenv.OnTerm(func() {
 		// FIXME(alainjobart): stop vtgate
