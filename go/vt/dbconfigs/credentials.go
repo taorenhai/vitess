@@ -26,6 +26,7 @@ import (
 	"errors"
 	"flag"
 	"io/ioutil"
+	"strings"
 	"sync"
 
 	"vitess.io/vitess/go/mysql"
@@ -120,6 +121,11 @@ func WithCredentials(cp *mysql.ConnParams) (*mysql.ConnParams, error) {
 	case ErrUnknownUser:
 		// we just use what we have, and will fail later anyway
 		err = nil
+		// Prefixing a username by the dbname is the convention used in "direct" mode.
+		// If so, strip the db name. This makes testing easy.
+		if splits := strings.Split(result.Uname, "."); len(splits) == 2 {
+			result.Uname = splits[1]
+		}
 	}
 	return &result, err
 }
